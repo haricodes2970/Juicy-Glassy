@@ -1,4 +1,5 @@
 import { useStore } from '../store/useStore'
+import { extractYouTubeData } from '../../content/extractor'
 
 export default function HeroSection() {
   const featured = useStore((s) => s.youtubeData.featuredVideo)
@@ -55,6 +56,17 @@ export default function HeroSection() {
     window.open(`https://youtube.com/watch?v=${videoId}`, '_self')
   }
 
+  function handleRefresh() {
+    try {
+      const data = extractYouTubeData()
+      if (data && data.videos) {
+        useStore.getState().setYouTubeData(data)
+      }
+    } catch (e) {
+      console.warn('Refresh failed', e)
+    }
+  }
+
   return (
     <section className="space-y-4">
       <div className="flex items-end justify-between gap-4">
@@ -64,7 +76,7 @@ export default function HeroSection() {
           </p>
           <h2 className="mt-2 text-xl font-semibold text-white">Curated for the current session</h2>
         </div>
-        <button className="text-sm text-white/65 transition hover:text-white">
+        <button onClick={handleRefresh} className="text-sm text-white/65 transition hover:text-white">
           Refresh feed
         </button>
       </div>
