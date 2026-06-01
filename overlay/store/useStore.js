@@ -6,6 +6,7 @@ const initialState = {
     featuredVideo: null,
     categories: [],
   },
+  ambientColor: '108, 99, 255',
   ui: {
     sidebarCollapsed: false,
     overlayActive: false,
@@ -26,6 +27,11 @@ export const useStore = create((set) => ({
 
   setFeaturedVideo: (video) =>
     set((state) => ({ youtubeData: { ...state.youtubeData, featuredVideo: video } })),
+
+  setYouTubeData: ({ videos, featured }) =>
+    set({ youtubeData: { videos, featuredVideo: featured, categories: [] } }),
+
+  setAmbientColor: (color) => set({ ambientColor: color }),
 
   toggleSidebar: () =>
     set((state) => ({ ui: { ...state.ui, sidebarCollapsed: !state.ui.sidebarCollapsed } })),
