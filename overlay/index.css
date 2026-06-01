@@ -5,10 +5,10 @@
 @tailwind utilities;
 
 :root {
-  --glass-bg: rgba(255, 255, 255, 0.05);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
-  --glass-blur: blur(16px);
+  --glass-bg: rgba(255, 255, 255, 0.08);
+  --glass-border: rgba(255, 255, 255, 0.14);
+  --glass-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+  --glass-blur: blur(12px);
   --glass-radius: 16px;
   --accent-primary: #6C63FF;
   --accent-secondary: #FF6584;
@@ -16,7 +16,7 @@
   --text-primary: #FFFFFF;
   --text-secondary: rgba(255, 255, 255, 0.7);
   --text-muted: rgba(255, 255, 255, 0.4);
-  --bg-dark: #0a0a0f;
+  --bg-dark: #0f1724;
   --bg-surface: rgba(255, 255, 255, 0.03);
 }
 
