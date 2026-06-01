@@ -2,7 +2,6 @@ import { useEffect } from 'react'
 import Sidebar from './components/Sidebar'
 import HeroSection from './components/HeroSection'
 import VideoRow from './components/VideoRow'
-import NowPlaying from './components/NowPlaying'
 import { useStore } from './store/useStore'
 
 function extractDominantColor(imgSrc) {
@@ -111,11 +110,7 @@ export default function App() {
           </div>
         </main>
       </div>
-      <div className="pointer-events-none absolute inset-x-4 bottom-4 z-20 lg:left-6 lg:right-6">
-        <div className="pointer-events-auto">
-          <NowPlaying />
-        </div>
-      </div>
+      {/* NowPlaying removed per v0.0.4 design — bottom player disabled */}
     </div>
   )
 }
