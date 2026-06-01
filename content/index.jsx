@@ -2,9 +2,17 @@ import cssText from '../overlay/index.css?inline'
 import { createRoot } from 'react-dom/client'
 import App from '../overlay/App'
 import { createObserver, destroyObserver } from './observer'
+import { extractYouTubeData } from './extractor'
+import { useStore } from '../overlay/store/useStore'
 
 let reactRoot = null
 let shadowHost = null
+let shadowRoot = null
+
+function injectData() {
+  const data = extractYouTubeData()
+  useStore.getState().setYouTubeData(data)
+}
 
 function mountOverlay() {
   if (shadowHost) return
@@ -20,21 +28,23 @@ function mountOverlay() {
   shadowHost.style.cssText = 'position:fixed;inset:0;z-index:2147483646;overflow:hidden;'
   document.body.appendChild(shadowHost)
 
-  const shadow = shadowHost.attachShadow({ mode: 'open' })
+  shadowRoot = shadowHost.attachShadow({ mode: 'open' })
 
   const resetStyle = document.createElement('style')
   resetStyle.textContent = `:host{all:initial;display:block;width:100vw;height:100vh;overflow:hidden;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}`
-  shadow.appendChild(resetStyle)
+  shadowRoot.appendChild(resetStyle)
 
   const style = document.createElement('style')
   style.textContent = cssText
-  shadow.appendChild(style)
+  shadowRoot.appendChild(style)
 
   const rootContainer = document.createElement('div')
   rootContainer.id = 'app-root'
   rootContainer.style.cssText = 'width:100%;height:100%;'
-  shadow.appendChild(rootContainer)
+  shadowRoot.appendChild(rootContainer)
+
+  injectData()
 
   const root = createRoot(rootContainer)
   root.render(<App />)
@@ -50,6 +60,7 @@ function unmountOverlay() {
     shadowHost.remove()
     shadowHost = null
   }
+  shadowRoot = null
 
   const pageManager = document.querySelector('#page-manager, ytd-page-manager')
   if (pageManager) pageManager.style.removeProperty('display')
@@ -74,6 +85,8 @@ if (isYouTubeHomepage()) {
 createObserver(({ isHomepage }) => {
   if (isHomepage && !shadowHost) {
     mountOverlay()
+  } else if (isHomepage && shadowHost) {
+    injectData()
   } else if (!isHomepage && shadowHost) {
     unmountOverlay()
   }
