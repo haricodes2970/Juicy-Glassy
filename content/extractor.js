@@ -63,58 +63,127 @@ const MOCK_DATA = {
   ],
 }
 
-function extractVideoRenderer(item) {
-  const renderer =
-    item?.richItemRenderer?.content?.videoRenderer ||
-    item?.videoRenderer
-  if (!renderer) return null
+export function scrapeSubscriptionsFromDOM() {
+  const subs = []
+  const guideEntries = document.querySelectorAll('ytd-guide-entry-renderer')
+  
+  guideEntries.forEach((el) => {
+    const linkEl = el.querySelector('a')
+    if (!linkEl) return
+    const href = linkEl.getAttribute('href') || ''
+    
+    // We only want channel links, e.g. /@username or /channel/UC...
+    if (!href.startsWith('/@') && !href.startsWith('/channel/') && !href.includes('/c/')) {
+      return
+    }
+    
+    const titleEl = el.querySelector('.title, #entry-title, yt-formatted-string.title')
+    const name = titleEl ? titleEl.textContent.trim() : ''
+    if (!name) return
+    
+    const avatarEl = el.querySelector('yt-img-shadow img, img')
+    const avatarSrc = avatarEl ? avatarEl.getAttribute('src') : ''
+    
+    // Filter to known yt avatar domains to ensure it's a channel sub
+    if (avatarSrc && (avatarSrc.includes('yt3.ggpht.com') || avatarSrc.includes('yt3.android.com'))) {
+      subs.push({ name, url: href, avatar: avatarSrc })
+    }
+  })
+  
+  // Deduplicate by URL
+  const uniqueSubs = []
+  const urls = new Set()
+  subs.forEach((sub) => {
+    if (!urls.has(sub.url)) {
+      urls.add(sub.url)
+      uniqueSubs.push(sub)
+    }
+  })
+  
+  return uniqueSubs
+}
 
-  const thumbnails = renderer.thumbnail?.thumbnails || []
-  const bestThumb = thumbnails[thumbnails.length - 1]?.url || ''
-
-  return {
-    videoId: renderer.videoId || '',
-    title: renderer.title?.runs?.[0]?.text || 'Untitled',
-    thumbnail: bestThumb,
-    channelName: renderer.ownerText?.runs?.[0]?.text || 'Unknown',
-    viewCount:
-      renderer.viewCountText?.simpleText ||
-      renderer.viewCountText?.runs?.[0]?.text ||
-      '',
-    publishedTime: renderer.publishedTimeText?.simpleText || '',
-    duration: renderer.lengthText?.simpleText || '',
-    description:
-      renderer.detailedMetadataSnippets?.[0]?.snippetText?.runs?.[0]?.text ||
-      renderer.title?.runs?.[0]?.text ||
-      '',
-  }
+export function scrapeVideosFromDOM() {
+  const videoElements = document.querySelectorAll('ytd-rich-item-renderer, ytd-video-renderer')
+  const videos = []
+  
+  videoElements.forEach((el) => {
+    const linkEl = el.querySelector('a#video-title-link, a#thumbnail, a#video-title')
+    if (!linkEl) return
+    
+    const href = linkEl.getAttribute('href')
+    if (!href) return
+    
+    const videoIdMatch = href.match(/[?&]v=([^&#]+)/)
+    if (!videoIdMatch) return
+    const videoId = videoIdMatch[1]
+    
+    const titleEl = el.querySelector('#video-title')
+    const title = titleEl ? titleEl.textContent.trim() : ''
+    if (!title) return
+    
+    const channelNameEl = el.querySelector('ytd-channel-name a, #channel-name a, #byline a')
+    const channelName = channelNameEl ? channelNameEl.textContent.trim() : 'Unknown'
+    
+    const channelAvatarEl = el.querySelector('#avatar-container img, yt-img-shadow img, #avatar img, #channel-thumbnail img')
+    let channelAvatar = channelAvatarEl ? channelAvatarEl.getAttribute('src') : ''
+    if (channelAvatar && channelAvatar.startsWith('//')) {
+      channelAvatar = 'https:' + channelAvatar
+    }
+    
+    const metadataLines = el.querySelectorAll('#metadata-line span')
+    let viewCount = ''
+    let publishedTime = ''
+    if (metadataLines.length > 0) {
+      viewCount = metadataLines[0].textContent.trim()
+    }
+    if (metadataLines.length > 1) {
+      publishedTime = metadataLines[1].textContent.trim()
+    }
+    
+    const durationEl = el.querySelector('ytd-thumbnail-overlay-time-status-renderer span, badge-shape, ytd-badge-supported-renderer span')
+    const duration = durationEl ? durationEl.textContent.trim() : ''
+    
+    // Construct real high-quality thumbnail without relying on lazy loading
+    const thumbnail = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`
+    
+    videos.push({
+      videoId,
+      title,
+      thumbnail,
+      channelName,
+      channelAvatar,
+      viewCount,
+      publishedTime,
+      duration,
+    })
+  })
+  
+  return videos
 }
 
 function getMockData() {
   return {
     videos: MOCK_DATA.videos,
     featured: MOCK_DATA.videos[0],
+    subscriptions: [],
   }
 }
 
 export function extractYouTubeData() {
   try {
-    const data = window.ytInitialData
-    if (!data) throw new Error('ytInitialData not found')
-
-    const contents =
-      data?.contents?.twoColumnBrowseResultsRenderer?.tabs?.[0]?.tabRenderer
-        ?.content?.richGridRenderer?.contents
-
-    if (!contents || !Array.isArray(contents) || contents.length === 0) {
-      throw new Error('no video contents found')
+    const videos = scrapeVideosFromDOM()
+    const subscriptions = scrapeSubscriptionsFromDOM()
+    
+    if (videos.length === 0) {
+      return getMockData()
     }
-
-    const videos = contents.map(extractVideoRenderer).filter(Boolean)
-
-    if (videos.length === 0) throw new Error('no video items extracted')
-
-    return { videos, featured: videos[0] }
+    
+    return {
+      videos,
+      featured: videos[0] || null,
+      subscriptions,
+    }
   } catch (e) {
     console.warn('[Juicy Glassy] extractYouTubeData:', e.message)
     return getMockData()

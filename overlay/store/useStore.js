@@ -5,6 +5,7 @@ const initialState = {
     videos: [],
     featuredVideo: null,
     categories: [],
+    subscriptions: [],
   },
   ambientColor: '108, 99, 255',
   ui: {
@@ -25,11 +26,29 @@ export const useStore = create((set) => ({
   setVideos: (videos) =>
     set((state) => ({ youtubeData: { ...state.youtubeData, videos } })),
 
+  appendVideos: (newVideos) =>
+    set((state) => {
+      const currentVideos = state.youtubeData.videos || []
+      const combined = [...currentVideos, ...newVideos]
+      // Deduplicate by videoId
+      const uniqueVideos = combined.filter(
+        (v, index, self) => index === self.findIndex((t) => t.videoId === v.videoId)
+      )
+      return { youtubeData: { ...state.youtubeData, videos: uniqueVideos } }
+    }),
+
   setFeaturedVideo: (video) =>
     set((state) => ({ youtubeData: { ...state.youtubeData, featuredVideo: video } })),
 
-  setYouTubeData: ({ videos, featured }) =>
-    set({ youtubeData: { videos, featuredVideo: featured, categories: [] } }),
+  setYouTubeData: ({ videos, featured, subscriptions }) =>
+    set((state) => ({
+      youtubeData: {
+        videos,
+        featuredVideo: featured,
+        categories: [],
+        subscriptions: subscriptions || state.youtubeData.subscriptions || [],
+      },
+    })),
 
   setAmbientColor: (color) => set({ ambientColor: color }),
 
