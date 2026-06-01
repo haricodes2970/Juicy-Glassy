@@ -1,12 +1,14 @@
-const placeholderCards = Array.from({ length: 6 }, (_, i) => ({
-  id: i,
-  title: `Sample Video ${i + 1}`,
-  channel: 'Creator Channel',
-  views: `${(i + 3) * 1.2}K views`,
-  time: `${i + 1} hour ago`,
-}))
+import { useStore } from '../store/useStore'
 
 export default function VideoRow({ title = 'Continue Watching' }) {
+  const videos = useStore((s) => s.youtubeData.videos)
+
+  if (!videos || videos.length === 0) return null
+
+  function handleOpen(videoId) {
+    window.open(`https://youtube.com/watch?v=${videoId}`, '_self')
+  }
+
   return (
     <section className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
@@ -19,28 +21,38 @@ export default function VideoRow({ title = 'Continue Watching' }) {
       </div>
 
       <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-glass">
-        {placeholderCards.map((card) => (
+        {videos.slice(0, 10).map((card) => (
           <div
-            key={card.id}
+            key={card.videoId}
+            onClick={() => handleOpen(card.videoId)}
             className="flex-shrink-0 w-56 glass-card p-0 overflow-hidden cursor-pointer group"
           >
-            <div className="aspect-video bg-gradient-to-br from-accent-primary/10 to-accent-secondary/5 flex items-center justify-center relative">
-              <span className="text-2xl opacity-30 group-hover:opacity-60 transition-opacity">
-                ▶
-              </span>
-              <span className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 text-[10px] font-medium glass rounded">
-                8:4{card.id + 2}
-              </span>
+            <div className="aspect-video bg-dark-surface flex items-center justify-center relative overflow-hidden">
+              {card.thumbnail ? (
+                <img
+                  src={card.thumbnail}
+                  alt={card.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+              ) : (
+                <span className="text-2xl opacity-30">▶</span>
+              )}
+              {card.duration && (
+                <span className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 text-[10px] font-medium glass rounded">
+                  {card.duration}
+                </span>
+              )}
             </div>
             <div className="p-3">
               <h4 className="text-sm font-medium text-white truncate">
                 {card.title}
               </h4>
-              <p className="text-xs text-text-muted mt-1">
-                {card.channel}
+              <p className="text-xs text-text-muted mt-1 truncate">
+                {card.channelName}
               </p>
-              <p className="text-xs text-text-muted">
-                {card.views} · {card.time}
+              <p className="text-xs text-text-muted truncate">
+                {card.viewCount}
+                {card.publishedTime ? ` · ${card.publishedTime}` : ''}
               </p>
             </div>
           </div>
