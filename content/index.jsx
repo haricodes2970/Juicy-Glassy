@@ -8,10 +8,18 @@ import { useStore } from '../overlay/store/useStore'
 let reactRoot = null
 let shadowHost = null
 let shadowRoot = null
+let debounceTimer = null
 
 function injectData() {
   const data = extractYouTubeData()
   useStore.getState().setYouTubeData(data)
+}
+
+function debouncedInjectData() {
+  if (debounceTimer) clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(() => {
+    injectData()
+  }, 250)
 }
 
 function mountOverlay() {
@@ -44,7 +52,7 @@ function mountOverlay() {
   rootContainer.style.cssText = 'width:100%;height:100%;'
   shadowRoot.appendChild(rootContainer)
 
-  injectData()
+  injectData() // Initial inject without debounce
 
   const root = createRoot(rootContainer)
   root.render(<App />)
@@ -61,6 +69,9 @@ function unmountOverlay() {
     shadowHost = null
   }
   shadowRoot = null
+  if (debounceTimer) {
+    clearTimeout(debounceTimer)
+  }
 
   const pageManager = document.querySelector('#page-manager, ytd-page-manager')
   if (pageManager) pageManager.style.removeProperty('display')
@@ -86,7 +97,7 @@ createObserver(({ isHomepage }) => {
   if (isHomepage && !shadowHost) {
     mountOverlay()
   } else if (isHomepage && shadowHost) {
-    injectData()
+    debouncedInjectData()
   } else if (!isHomepage && shadowHost) {
     unmountOverlay()
   }
