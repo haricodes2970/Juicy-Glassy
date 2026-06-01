@@ -49,7 +49,8 @@ export default function HeroSection() {
     (video, index, allVideos) =>
       allVideos.findIndex((candidate) => candidate.videoId === video.videoId) === index,
   )
-  const cards = dedupedVideos.length > 0 ? dedupedVideos.slice(0, 4) : fallbackCards
+  // Show up to 8 recommended videos in the hero carousel
+  const cards = dedupedVideos.length > 0 ? dedupedVideos.slice(0, 8) : fallbackCards
 
   function handleOpen(videoId) {
     if (!videoId) return
@@ -68,28 +69,26 @@ export default function HeroSection() {
   }
 
   return (
-    <section className="space-y-4">
-      <div className="flex items-end justify-between gap-4">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.35em] text-accent-primary/90">
-            Recommended
-          </p>
-          <h2 className="mt-2 text-xl font-semibold text-white">Curated for the current session</h2>
+    <section className="space-y-4 relative">
+      <div className="flex items-center gap-3">
+        <span className="text-xl text-white/80">✨</span>
+        <h2 className="text-xl font-bold text-white tracking-wide">Recommended</h2>
+        <div className="ml-auto">
+          <button onClick={handleRefresh} className="text-sm text-white/50 transition hover:text-white bg-white/5 px-3 py-1.5 rounded-full hover:bg-white/10">
+            Refresh
+          </button>
         </div>
-        <button onClick={handleRefresh} className="text-sm text-white/65 transition hover:text-white">
-          Refresh feed
-        </button>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-4">
+      <div className="flex gap-4 overflow-x-auto pb-4 pr-4 scrollbar-glass">
         {cards.map((card) => {
           const isLive = typeof card.publishedTime === 'string' && card.publishedTime.toUpperCase() === 'LIVE'
 
           return (
-            <button
+            <div
               key={card.videoId || card.title}
+              className="group w-[22rem] shrink-0 cursor-pointer overflow-hidden rounded-[1.5rem] border border-white/10 bg-white/6 text-left shadow-glass backdrop-blur-2xl transition duration-300 hover:-translate-y-1 hover:border-white/18 hover:bg-white/10 hover:shadow-[0_18px_48px_rgba(0,0,0,0.45)]"
               onClick={() => handleOpen(card.videoId)}
-              className="group overflow-hidden rounded-[1.5rem] border border-white/10 bg-white/6 text-left shadow-glass backdrop-blur-2xl transition duration-300 hover:-translate-y-1 hover:border-white/18 hover:bg-white/10 hover:shadow-[0_18px_48px_rgba(0,0,0,0.45)]"
             >
               <div className="relative aspect-video overflow-hidden">
                 {card.thumbnail ? (
@@ -105,30 +104,44 @@ export default function HeroSection() {
                     </div>
                   </div>
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
                 <span className="absolute bottom-2 right-2 rounded-md bg-black/70 px-2 py-1 text-[11px] font-semibold text-white shadow-lg backdrop-blur-sm">
                   {card.duration || '—'}
                 </span>
               </div>
 
-              <div className="flex gap-3 p-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/10 text-sm font-semibold text-white/90">
-                  {String(card.channelName || 'YT').slice(0, 2).toUpperCase()}
-                </div>
+              <div className="flex gap-3 p-4 relative">
+                {card.channelAvatar ? (
+                  <img src={card.channelAvatar} alt={card.channelName} className="h-10 w-10 shrink-0 rounded-full border border-white/10 object-cover" />
+                ) : (
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-gradient-to-br from-blue-500 to-purple-600 text-sm font-semibold text-white/90">
+                    {String(card.channelName || 'YT').slice(0, 2).toUpperCase()}
+                  </div>
+                )}
 
-                <div className="min-w-0 flex-1">
-                  <h3 className="line-clamp-2 text-sm font-semibold leading-5 text-white">
+                <div className="min-w-0 flex-1 pr-6">
+                  <h3 className="line-clamp-2 text-[15px] font-semibold leading-[1.3] text-white/95">
                     {card.title}
                   </h3>
-                  <p className="mt-1 text-xs text-white/64">{card.channelName || 'YouTube'}</p>
-                  <div className="mt-1 flex items-center gap-2 text-[11px] text-white/46">
+                  <div className="mt-1.5 flex items-center gap-1.5 text-xs text-white/60">
+                    <span>{card.channelName || 'YouTube'}</span>
+                    <span className="text-[10px]">✓</span>
+                  </div>
+                  <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-white/40">
                     <span>{card.viewCount || '—'}</span>
-                    <span className="h-1 w-1 rounded-full bg-white/35" />
-                    <span className={isLive ? 'text-emerald-400' : ''}>{card.publishedTime || 'Recently'}</span>
+                    <span className="h-1 w-1 rounded-full bg-white/20" />
+                    <span className={isLive ? 'text-red-400 font-semibold' : ''}>{card.publishedTime || 'Recently'}</span>
                   </div>
                 </div>
+
+                <button 
+                  className="absolute right-3 top-4 text-white/40 hover:text-white px-2 rounded-full transition-colors hover:bg-white/10"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  ⋮
+                </button>
               </div>
-            </button>
+            </div>
           )
         })}
       </div>
