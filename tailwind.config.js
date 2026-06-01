@@ -14,6 +14,12 @@ export default {
           hover: 'rgba(255, 255, 255, 0.08)',
           surface: 'rgba(255, 255, 255, 0.03)',
         },
+        text: {
+          primary: '#FFFFFF',
+          secondary: 'rgba(255, 255, 255, 0.78)',
+          muted: 'rgba(255, 255, 255, 0.52)',
+          subtle: 'rgba(255, 255, 255, 0.36)',
+        },
         accent: {
           primary: '#6C63FF',
           secondary: '#FF6584',
