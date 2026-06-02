@@ -2,38 +2,84 @@ import cssText from '../overlay/index.css?inline'
 import { createRoot } from 'react-dom/client'
 import App from '../overlay/App'
 import { createObserver, destroyObserver } from './observer'
-import { extractYouTubeData } from './extractor'
 import { useStore } from '../overlay/store/useStore'
 
 let reactRoot = null
 let shadowHost = null
 let shadowRoot = null
-let debounceTimer = null
+let dataReceived = false
 
-function injectData() {
-  const data = extractYouTubeData()
-  useStore.getState().setYouTubeData(data)
+/* ------------------------------------------------------------------ */
+/*  Inject the MAIN-world extractor                                   */
+/* ------------------------------------------------------------------ */
+function injectExtractor() {
+  const script = document.createElement('script')
+  script.src = chrome.runtime.getURL('content/injector.js')
+  script.onload = () => script.remove()
+  ;(document.head || document.documentElement).appendChild(script)
 }
 
-function debouncedInjectData() {
-  if (debounceTimer) clearTimeout(debounceTimer)
-  debounceTimer = setTimeout(() => {
-    injectData()
-  }, 250)
-}
+/* ------------------------------------------------------------------ */
+/*  Listen for data from the MAIN-world injector                      */
+/* ------------------------------------------------------------------ */
+window.addEventListener('message', (event) => {
+  if (event.source !== window) return
 
-function mountOverlay() {
-  if (shadowHost) return
+  if (event.data && event.data.type === 'JUICY_GLASSY_DATA') {
+    const { videos, featured, subscriptions, chips } = event.data.payload
+    dataReceived = true
 
+    useStore.getState().setYouTubeData({
+      videos: videos || [],
+      featured: featured || null,
+      subscriptions: subscriptions || [],
+    })
+
+    if (chips && chips.length > 0) {
+      useStore.getState().setChips(chips)
+    }
+
+    // Now it's safe to hide the native page
+    hideNativePage()
+  }
+
+  if (event.data && event.data.type === 'JUICY_GLASSY_DATA_APPEND') {
+    const { videos } = event.data.payload
+    if (videos && videos.length > 0) {
+      useStore.getState().appendVideos(videos)
+    }
+  }
+})
+
+/* ------------------------------------------------------------------ */
+/*  Hide the native YouTube page (only after data is captured)        */
+/* ------------------------------------------------------------------ */
+function hideNativePage() {
   const pageManager = document.querySelector('#page-manager, ytd-page-manager')
   if (pageManager) pageManager.style.setProperty('display', 'none', 'important')
 
   const masthead = document.querySelector('#masthead-container')
   if (masthead) masthead.style.setProperty('display', 'none', 'important')
+}
+
+function showNativePage() {
+  const pageManager = document.querySelector('#page-manager, ytd-page-manager')
+  if (pageManager) pageManager.style.removeProperty('display')
+
+  const masthead = document.querySelector('#masthead-container')
+  if (masthead) masthead.style.removeProperty('display')
+}
+
+/* ------------------------------------------------------------------ */
+/*  Mount / unmount the React overlay                                 */
+/* ------------------------------------------------------------------ */
+function mountOverlay() {
+  if (shadowHost) return
 
   shadowHost = document.createElement('div')
   shadowHost.id = 'juicy-glassy-root'
-  shadowHost.style.cssText = 'position:fixed;inset:0;z-index:2147483646;overflow:hidden;'
+  shadowHost.style.cssText =
+    'position:fixed;inset:0;z-index:2147483646;overflow:hidden;'
   document.body.appendChild(shadowHost)
 
   shadowRoot = shadowHost.attachShadow({ mode: 'open' })
@@ -52,11 +98,19 @@ function mountOverlay() {
   rootContainer.style.cssText = 'width:100%;height:100%;'
   shadowRoot.appendChild(rootContainer)
 
-  injectData() // Initial inject without debounce
-
   const root = createRoot(rootContainer)
   root.render(<App />)
   reactRoot = root
+
+  // Inject the extractor into MAIN world
+  injectExtractor()
+
+  // Safety: if no data arrives within 4s, hide native page anyway (with mock data)
+  setTimeout(() => {
+    if (!dataReceived) {
+      hideNativePage()
+    }
+  }, 4000)
 }
 
 function unmountOverlay() {
@@ -69,15 +123,9 @@ function unmountOverlay() {
     shadowHost = null
   }
   shadowRoot = null
-  if (debounceTimer) {
-    clearTimeout(debounceTimer)
-  }
+  dataReceived = false
 
-  const pageManager = document.querySelector('#page-manager, ytd-page-manager')
-  if (pageManager) pageManager.style.removeProperty('display')
-
-  const masthead = document.querySelector('#masthead-container')
-  if (masthead) masthead.style.removeProperty('display')
+  showNativePage()
 }
 
 function isYouTubeHomepage() {
@@ -96,8 +144,6 @@ if (isYouTubeHomepage()) {
 createObserver(({ isHomepage }) => {
   if (isHomepage && !shadowHost) {
     mountOverlay()
-  } else if (isHomepage && shadowHost) {
-    debouncedInjectData()
   } else if (!isHomepage && shadowHost) {
     unmountOverlay()
   }

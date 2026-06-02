@@ -1,5 +1,20 @@
 import { create } from 'zustand'
 
+const defaultChips = [
+  { text: 'All', isSelected: true },
+  { text: 'Music', isSelected: false },
+  { text: 'Mixes', isSelected: false },
+  { text: 'AI', isSelected: false },
+  { text: 'Coding', isSelected: false },
+  { text: 'Podcasts', isSelected: false },
+  { text: 'Gaming', isSelected: false },
+  { text: 'Study', isSelected: false },
+  { text: 'Live', isSelected: false },
+  { text: 'Motivation', isSelected: false },
+  { text: 'Design', isSelected: false },
+  { text: 'Recently uploaded', isSelected: false },
+]
+
 const initialState = {
   youtubeData: {
     videos: [],
@@ -7,6 +22,7 @@ const initialState = {
     categories: [],
     subscriptions: [],
   },
+  chips: defaultChips,
   ambientColor: '108, 99, 255',
   ui: {
     sidebarCollapsed: false,
@@ -30,15 +46,17 @@ export const useStore = create((set) => ({
     set((state) => {
       const currentVideos = state.youtubeData.videos || []
       const combined = [...currentVideos, ...newVideos]
-      // Deduplicate by videoId
       const uniqueVideos = combined.filter(
-        (v, index, self) => index === self.findIndex((t) => t.videoId === v.videoId)
+        (v, index, self) =>
+          index === self.findIndex((t) => t.videoId === v.videoId)
       )
       return { youtubeData: { ...state.youtubeData, videos: uniqueVideos } }
     }),
 
   setFeaturedVideo: (video) =>
-    set((state) => ({ youtubeData: { ...state.youtubeData, featuredVideo: video } })),
+    set((state) => ({
+      youtubeData: { ...state.youtubeData, featuredVideo: video },
+    })),
 
   setYouTubeData: ({ videos, featured, subscriptions }) =>
     set((state) => ({
@@ -46,20 +64,27 @@ export const useStore = create((set) => ({
         videos,
         featuredVideo: featured,
         categories: [],
-        subscriptions: subscriptions || state.youtubeData.subscriptions || [],
+        subscriptions:
+          subscriptions || state.youtubeData.subscriptions || [],
       },
     })),
+
+  setChips: (chips) => set({ chips }),
 
   setAmbientColor: (color) => set({ ambientColor: color }),
 
   toggleSidebar: () =>
-    set((state) => ({ ui: { ...state.ui, sidebarCollapsed: !state.ui.sidebarCollapsed } })),
+    set((state) => ({
+      ui: { ...state.ui, sidebarCollapsed: !state.ui.sidebarCollapsed },
+    })),
 
   setOverlayActive: (active) =>
     set((state) => ({ ui: { ...state.ui, overlayActive: active } })),
 
   toggleFocusMode: () =>
-    set((state) => ({ ui: { ...state.ui, focusMode: !state.ui.focusMode } })),
+    set((state) => ({
+      ui: { ...state.ui, focusMode: !state.ui.focusMode },
+    })),
 
   setApiKey: (apiKey) =>
     set((state) => ({ settings: { ...state.settings, apiKey } })),

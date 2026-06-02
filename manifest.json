@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Juicy Glassy",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Cinematic glassmorphism dashboard for YouTube",
   "permissions": [
     "storage",
@@ -23,7 +23,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["assets/*"],
+      "resources": ["assets/*", "content/injector.js"],
       "matches": ["*://*.youtube.com/*"]
     }
   ]

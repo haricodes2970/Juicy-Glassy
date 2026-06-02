@@ -87,6 +87,7 @@ body {
     background-clip: text;
   }
 
+  /* Scrollbar */
   .scrollbar-glass::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -103,5 +104,69 @@ body {
 
   .scrollbar-glass::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.25);
+  }
+
+  /* Scroll arrow buttons */
+  .scroll-arrow-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: white;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .group\/scroll:hover .scroll-arrow-btn {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .scroll-arrow-btn:hover {
+    background: rgba(0, 0, 0, 0.85);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-50%) scale(1.08);
+    box-shadow: 0 6px 28px rgba(0, 0, 0, 0.5);
+  }
+
+  .scroll-arrow-btn:active {
+    transform: translateY(-50%) scale(0.95);
+  }
+
+  /* LIVE badge */
+  .live-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: rgba(220, 38, 38, 0.9);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    backdrop-filter: blur(4px);
+    animation: live-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes live-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.5); }
+    50% { box-shadow: 0 0 12px 3px rgba(220, 38, 38, 0.35); }
   }
 }
